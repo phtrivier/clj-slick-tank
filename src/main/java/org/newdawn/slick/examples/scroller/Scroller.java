@@ -146,6 +146,14 @@ public class Scroller extends BasicGame {
 	 * @return True if the location is blocked
 	 */
 	private boolean blocked(float x, float y) {
+		Log.info("Blocked stuff : " + blocked);
+		for (int i = 0 ; i < 10 ; i++) {
+			for (int j = 0 ; j < 10 ; j++) {
+				Log.info("Blocked at " + i + ", " + j + " : " + blocked[i][j]);
+			}
+		}
+		
+		
 		return blocked[(int) x][(int) y];
 	}
 	

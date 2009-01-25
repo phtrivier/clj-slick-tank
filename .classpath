@@ -4,7 +4,7 @@
 	<classpathentry kind="src" path="src/main/clj"/>
 	<classpathentry excluding="java/|clj/" kind="src" path="src/main"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/clojure.jar"/>
+	<classpathentry kind="lib" path="lib/clojure.jar" sourcepath="/home/phtrivier/opt/clojure/src/jvm"/>
 	<classpathentry kind="lib" path="lib/lwjgl.jar">
 		<attributes>
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="pong/lib/native/linux"/>

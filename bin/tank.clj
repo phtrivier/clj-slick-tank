@@ -11,6 +11,7 @@ SlickException
 SpriteSheet
 ))
 (import '(org.newdawn.slick.tiled TiledMap))
+(import '(org.newdawn.slick.util Log))
 
 ;; Constants
 
@@ -26,10 +27,11 @@ SpriteSheet
 (defn make-animation
 	[images]
 	(let [a (new Animation)]
-		(for [i (range 0 8)]
-			(do
-				(.addFrame a (get images i) 150)))
-		(.setAutoUpdate a false)
+		(dorun	
+			(for [image images]
+				(do
+					(.addFrame a image 150))))
+	  (.setAutoUpdate a false)
 		a))
 	
 ;; (new Animation images 150 false))
@@ -56,10 +58,10 @@ SpriteSheet
 (defn update-player-movement-vector
 	"Changes the direction of the player based on its new angle"
 	[player]
-	(let [ang (player :ang)]
-		(assoc :dx (Math/sin (Math/toRadians ang))
-					 :dy (- (Math/cos (Math/toRadians ang)))
-				player)))	  
+	(let [radian-ang (Math/toRadians (player :ang))]
+		(assoc player
+					 :dx (Math/sin radian-ang)
+					 :dy (- (Math/cos radian-ang)))))	  
 
 ;; Structure for the screen and colision detection
 
@@ -88,6 +90,7 @@ SpriteSheet
 	whether a cell is blocked"
 	[m w h]
 	(make-matrix 
+		w h
 		(fn [i j]
 			(let [tileId (.getTileId m i j 0)]
 				(Boolean/parseBoolean 
@@ -132,20 +135,23 @@ SpriteSheet
 (defn key-down?
 	"Is a key down on a container ?"
 	[container key]
-	(.. container getInput isKeyDown key))
+	(.isKeyDown (.getInput container) key))
+	
+;;	(.. container getInput isKeyDown key))
 
 (defn turn
 	"Changes the angle of the player"
 	[player direction delta]
-	(assoc :ang (* direction delta tank-rotate-speed) player))
+	(let [new-angle (* direction delta tank-rotate-speed)]
+		(assoc  player :ang new-angle)))
 
 (defn update-player-angle
 	"Update the angle of a player based on the container's input"
 	[player container delta]
 	(if (key-down? container Input/KEY_RIGHT)
-		(update-player-movement-vector (turn player +1 delta))
+		(update-player-movement-vector (turn player 1 delta))
 		(if (key-down? container Input/KEY_LEFT)
-			(update-player-movement-vector (turn player -1 delta))
+			(update-player-movement-vector (turn player (- 1) delta))
 			player)))					  
 
 (defn update-player-animation 
@@ -153,7 +159,7 @@ SpriteSheet
 	[player delta]
 	(let [a (player :animation)]
 		(.update a delta)
-		(player)))
+		player))
 
 (defn update-player-position
 	"Changes the position and the animation of the player if possible"
@@ -188,17 +194,18 @@ SpriteSheet
 	
 	(let [i_px (int (player :x))
 				i_py (int (player :y))]
-		(let [o_px (int (* (- (i_px (player :x)) tile-size)))
-					o_py (int (* (- (i_py (player :y)) tile-size)))
+		(let [o_px (int (* (- i_px (player :x) tile-size)))
+					o_py (int (* (- i_py (player :y) tile-size)))
 					mx (- o_px (/ tank-size 2))
 					my (- o_py (/ tank-size 2))
-					m_sx (- i_px (player :left-offset) 1)
-					m_sy (- i_py (player :top-offset) 1)
-					m_w (+ (player :w) 3)
-					m_h (+ (player :h) 3)]
+					m_sx (- i_px (screen :left-offset) 1.0)
+					m_sy (- i_py (screen :top-offset) 1.0)
+					m_w (+ (screen :w) 3)
+					m_h (+ (screen :h) 3)]
 			(.render (screen :map) mx my m_sx m_sy m_w m_h)))
 			nil)
-				
+	
+	
 (defn render-translate-graphics
 	"Draw entities relative to the screen"
 	[graphics player]
@@ -218,17 +225,27 @@ SpriteSheet
 			(.rotate graphics cx cy rot))
 			nil)
 			
+(defn update-game-model
+	[player container delta]
+	(update-player-position 
+			(update-player-angle player container delta) 
+ 			player container delta))
+									
 (def scroller
 	(let [player (ref nil)
 				screen (ref nil)]
 		(proxy [BasicGame] ["Scroller"]
 			(init [container]
-				(reset-game player screen container))
+				(reset-game player screen container)
+				
+				(Log/info (str "Blocked stuff" (screen :blocked)))
+				)
 			
 			(update [container delta]
-				(alter player 
-					(fn [p container delta]
-						(update-player-position (update-player-angle container delta) container delta))))		
+				(dosync
+					(alter player 
+						update-game-model 
+						container delta)))
 							
 			(render [container graphics]
 				(render-draw-map @player @screen)
