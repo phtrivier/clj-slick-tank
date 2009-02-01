@@ -142,7 +142,8 @@ SpriteSheet
 (defn turn
 	"Changes the angle of the player"
 	[player direction delta]
-	(let [new-angle (* direction delta tank-rotate-speed)]
+	(let [new-angle (+ (player :ang) 
+										 (* direction delta tank-rotate-speed))]
 		(assoc  player :ang new-angle)))
 
 (defn update-player-angle

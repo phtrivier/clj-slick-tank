@@ -7,7 +7,7 @@
 	<classpathentry kind="lib" path="lib/clojure.jar" sourcepath="/home/phtrivier/opt/clojure/src/jvm"/>
 	<classpathentry kind="lib" path="lib/lwjgl.jar">
 		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="pong/lib/native/linux"/>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="tank/lib/native/linux"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/slick.jar" sourcepath="/home/phtrivier/opt/prj/slick/trunk/Slick/src">
