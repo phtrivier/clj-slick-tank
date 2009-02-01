@@ -39,7 +39,7 @@ SpriteSheet
 (defn make-images
 	[sheet]
 	(map (fn [idx] (.getSprite sheet idx 1))
-	 		(range 0 8)))
+	 		(range 0 7)))
 
 (defn load-player-animation
 	"Load the animation of a player"
@@ -60,8 +60,8 @@ SpriteSheet
 	[player]
 	(let [radian-ang (Math/toRadians (player :ang))]
 		(assoc player
-					 :dx (Math/sin radian-ang)
-					 :dy (- (Math/cos radian-ang)))))	  
+					 :dx (float (Math/sin radian-ang))
+					 :dy (float (- (Math/cos radian-ang))))))	  
 
 ;; Structure for the screen and colision detection
 
@@ -70,9 +70,10 @@ SpriteSheet
 (defn blocked?
 	"Is a position blocked in the screen?"
 	[screen x y]
-	(let [i y
-				j x]
-	(get (get (screen :blocked) i) j)))
+	(let [i (int y)
+				j (int x)]
+		(Log/info (str "Checking if position is blocked ? " i "," j))
+		(true? (get (get (screen :blocked) i) j))))
 
 (defn make-row-generator
 	[cell-generator w]
@@ -123,6 +124,12 @@ SpriteSheet
 				  bx (blocked? screen new_x (player :y))
 				  by (blocked? screen	(player :x) new_y)]
 				
+				(Log/info (str "dx, dy : " dx "," dy))
+				(Log/info (str "x,y : " (player :x) "," (player :y)))
+				(Log/info (str "new_x,new_y :" new_x ", " new_y))
+				(Log/info (str "bxy : " bxy))
+				(Log/info (str "bx :" bx))
+				(Log/info (str "by :" by))
 				(if bxy
 					(if bx
 						(if by
@@ -185,7 +192,7 @@ SpriteSheet
 
 (defn reset-game [player screen container]
 	(dosync 
-		(ref-set player (make-player))
+		(ref-set player (update-player-movement-vector (make-player)))
 		(ref-set screen (make-screen container)))
 	nil)
 

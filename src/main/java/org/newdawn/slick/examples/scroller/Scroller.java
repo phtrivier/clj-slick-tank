@@ -147,14 +147,17 @@ public class Scroller extends BasicGame {
 	 */
 	private boolean blocked(float x, float y) {
 		Log.info("Blocked stuff : " + blocked);
+		/*
 		for (int i = 0 ; i < 10 ; i++) {
 			for (int j = 0 ; j < 10 ; j++) {
 				Log.info("Blocked at " + i + ", " + j + " : " + blocked[i][j]);
 			}
 		}
+		*/
 		
-		
-		return blocked[(int) x][(int) y];
+		boolean res = blocked[(int) x][(int) y]; 
+		Log.info("Checking whether position is blocked : " + (int) x + ", " + (int) y + " -- result is : " + res);
+		return res;
 	}
 	
 	/**
