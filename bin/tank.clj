@@ -103,6 +103,8 @@ SpriteSheet
 	(let [w (float (/ (.getWidth container) tile-size))
 			  h (float (/ (.getHeight container) tile-size))
 			  map (new TiledMap "resources/map.tmx")]
+    (Log/info (str "Container's with : " (.getWidth container) ", tile-size :" tile-size))
+    (Log/info (str "Left offset : " (float (/ w 2))))
 		{ :w w 
 			:h h
 			:top-offset (float (/ h 2))
@@ -202,17 +204,22 @@ SpriteSheet
 	
 	(let [i_px (int (player :x))
 				i_py (int (player :y))]
-		(let [o_px (int (* (- i_px (player :x) tile-size)))
-					o_py (int (* (- i_py (player :y) tile-size)))
+		(let [o_px (int (* (- i_px (player :x)) tile-size))
+					o_py (int (* (- i_py (player :y)) tile-size))
 					mx (- o_px (/ tank-size 2))
 					my (- o_py (/ tank-size 2))
 					m_sx (- i_px (screen :left-offset) 1.0)
 					m_sy (- i_py (screen :top-offset) 1.0)
 					m_w (+ (screen :w) 3)
 					m_h (+ (screen :h) 3)]
+			(Log/info (str "i_px , i_py : " i_px "," i_py))		
+			(Log/info (str "o_px , o_py : " o_px "," o_py))
+			(Log/info (str "i_px : " i_px ", left-offset " (screen :left-offset)))		
+			(Log/info (str "i_py : " i_py ", top-offset " (screen :top-offset)))		
+			(Log/info (str "Params " mx "," my "," m_sx "," m_sy "," m_w "," m_h))
+			(Log/info (str "Expected -16, -16, 2, 6, 28, 21"))
 			(.render (screen :map) mx my m_sx m_sy m_w m_h)))
 			nil)
-	
 	
 (defn render-translate-graphics
 	"Draw entities relative to the screen"
@@ -300,6 +307,6 @@ SpriteSheet
 ;;(def p {:x 0 :y 0})
 
 ;; Let the fun beggin !!
-(.start (new AppGameContainer scroller))
+(.start (new AppGameContainer scroller 800 600 false))
 
 ;;(def M (make-matrix 2 3 (fn [i j] [i,j]))) 

@@ -95,6 +95,11 @@ public class Scroller extends BasicGame {
 		topOffsetInTiles = heightInTiles / 2;
 		leftOffsetInTiles = widthInTiles / 2;
 		
+		Log.info("Container's with : " + container.getWidth());
+		Log.info("Tile size : " + TILE_SIZE);
+		Log.info("Left offset : " + leftOffsetInTiles);
+		
+		
 		// create the player sprite based on a set of sprites from the sheet loaded
 		// above (tank tracks moving)
 		animation = new Animation();
@@ -213,19 +218,39 @@ public class Scroller extends BasicGame {
 		int playerTileX = (int) playerX;
 		int playerTileY = (int) playerY;
 		
+		Log.info("PlayerTileX : " + playerTileX);
+		Log.info("PlayerTileY : " + playerTileY);
+		
 		// caculate the offset of the player from the edge of the tile. As the player moves around this
 		// varies and this tells us how far to offset the tile based rendering to give the smooth
 		// motion of scrolling
 		int playerTileOffsetX = (int) ((playerTileX - playerX) * TILE_SIZE);
 		int playerTileOffsetY = (int) ((playerTileY - playerY) * TILE_SIZE);
+
+		Log.info("PlayerTileOffsetX : " + playerTileOffsetX);
+		Log.info("PlayerTileOffsetY : " + playerTileOffsetY);
 		
+			
 		// render the section of the map that should be visible. Notice the -1 and +3 which renders
 		// a little extra map around the edge of the screen to cope with tiles scrolling on and off
 		// the screen
-		map.render(playerTileOffsetX - (TANK_SIZE / 2), playerTileOffsetY - (TANK_SIZE / 2), 
-				   playerTileX - leftOffsetInTiles - 1, 
-				   playerTileY - topOffsetInTiles - 1,
-				   widthInTiles + 3, heightInTiles + 3);
+		int x = playerTileOffsetX - (TANK_SIZE / 2);
+		int y = playerTileOffsetY - (TANK_SIZE / 2);
+		
+		Log.info("PLayerTileX : " + playerTileX + ", LeftOffset in tiles : " + leftOffsetInTiles);
+		Log.info("PLayerTileY : " + playerTileY + ", TopOffset in tiles : " + topOffsetInTiles);
+		
+		int sx = playerTileX - leftOffsetInTiles - 1;
+		int sy = playerTileY - topOffsetInTiles - 1;
+		int width = widthInTiles + 3;
+		int height = heightInTiles + 3;
+		
+		Log.info("Params to map.render : " + x + ", " + y + ", " + sx + ", " + sy + ", " + width + ", " + height);
+		
+		map.render(x, y, 
+				   sx, 
+				   sy,
+				   width, height);
 		
 		// draw entities relative to the player that must appear in the centre of the screen
 		g.translate(400 - (int) (playerX * 32), 300 - (int) (playerY * 32));
