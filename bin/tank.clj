@@ -1,17 +1,17 @@
 ;;package org.newdawn.slick.examples.scroller;
-
-(import '(org.newdawn.slick 
-Animation
-AppGameContainer
-BasicGame
-GameContainer
-Graphics
-Input
-SlickException
-SpriteSheet
-))
-(import '(org.newdawn.slick.tiled TiledMap))
-(import '(org.newdawn.slick.util Log))
+;; Apparently there is no way to import all the
+;; classes from a java package ... which kinda sucks.
+(ns tank
+	(:import (org.newdawn.slick Animation 
+															AppGameContainer
+															BasicGame
+															GameContainer
+															Graphics
+															Input
+															SlickException
+															SpriteSheet)
+				   (org.newdawn.slick.tiled TiledMap)
+				   (org.newdawn.slick.util Log)))
 
 ;; Constants
 
@@ -34,8 +34,6 @@ SpriteSheet
 	  (.setAutoUpdate a false)
 		a))
 	
-;; (new Animation images 150 false))
-
 (defn make-images
 	[sheet]
 	(map (fn [idx] (.getSprite sheet idx 1))
@@ -67,12 +65,18 @@ SpriteSheet
 
 (defstruct screen :w :h :top-offset :left-offset :map :blocked)
 
+;; Collision map
+;; This is the part I am less happy about.
+;; I had to recreate a bunch of utility functions
+;; to create a matrix, and then I getting
+;; things in a table .. I am pretty sure
+;; I could have done better. 
+;; Maybe using only a one dimension array ? 
 (defn blocked?
 	"Is a position blocked in the screen?"
 	[screen x y]
-	(let [i (int y)
-				j (int x)]
-		(Log/info (str "Checking if position is blocked ? " i "," j))
+	(let [i (int x)
+				j (int y)]
 		(true? (get (get (screen :blocked) i) j))))
 
 (defn make-row-generator
@@ -94,23 +98,25 @@ SpriteSheet
 		w h
 		(fn [i j]
 			(let [tileId (.getTileId m i j 0)]
-				(Boolean/parseBoolean 
-					(.getTileProperty m tileId "blocked" "false"))))))
-
+				(let [res 
+							(Boolean/parseBoolean 
+								(.getTileProperty m tileId "blocked" "false"))]
+							res	
+								)))))
+;;; 	
+	
 (defn make-screen
 	"Make the screens, prepare the map of blocked cells"
 	[container]
 	(let [w (float (/ (.getWidth container) tile-size))
 			  h (float (/ (.getHeight container) tile-size))
 			  map (new TiledMap "resources/map.tmx")]
-    (Log/info (str "Container's with : " (.getWidth container) ", tile-size :" tile-size))
-    (Log/info (str "Left offset : " (float (/ w 2))))
 		{ :w w 
 			:h h
-			:top-offset (float (/ h 2))
-			:left-offset (float (/ w 2))
+			:top-offset (int (/ h 2))
+			:left-offset (int (/ w 2))
 			:map map
-			:blocked (make-collision-map map w h) }))		
+			:blocked (make-collision-map map (.getWidth map) (.getHeight map)) }))		
 
 ;; Movement
 (defn try-move
@@ -125,13 +131,6 @@ SpriteSheet
 		(let [bxy (blocked? screen new_x new_y)
 				  bx (blocked? screen new_x (player :y))
 				  by (blocked? screen	(player :x) new_y)]
-				
-				(Log/info (str "dx, dy : " dx "," dy))
-				(Log/info (str "x,y : " (player :x) "," (player :y)))
-				(Log/info (str "new_x,new_y :" new_x ", " new_y))
-				(Log/info (str "bxy : " bxy))
-				(Log/info (str "bx :" bx))
-				(Log/info (str "by :" by))
 				(if bxy
 					(if bx
 						(if by
@@ -146,8 +145,6 @@ SpriteSheet
 	[container key]
 	(.isKeyDown (.getInput container) key))
 	
-;;	(.. container getInput isKeyDown key))
-
 (defn turn
 	"Changes the angle of the player"
 	[player direction delta]
@@ -190,14 +187,7 @@ SpriteSheet
 					  
 ;; ------------------------------------------------------
 
-;; Mutable state ?
-
-(defn reset-game [player screen container]
-	(dosync 
-		(ref-set player (update-player-movement-vector (make-player)))
-		(ref-set screen (make-screen container)))
-	nil)
-
+;; Rendering functions (ugly as possible...)
 (defn render-draw-map
 	"Draws only the relevant part of the map"
 	[player screen]
@@ -208,16 +198,10 @@ SpriteSheet
 					o_py (int (* (- i_py (player :y)) tile-size))
 					mx (- o_px (/ tank-size 2))
 					my (- o_py (/ tank-size 2))
-					m_sx (- i_px (screen :left-offset) 1.0)
-					m_sy (- i_py (screen :top-offset) 1.0)
-					m_w (+ (screen :w) 3)
-					m_h (+ (screen :h) 3)]
-			(Log/info (str "i_px , i_py : " i_px "," i_py))		
-			(Log/info (str "o_px , o_py : " o_px "," o_py))
-			(Log/info (str "i_px : " i_px ", left-offset " (screen :left-offset)))		
-			(Log/info (str "i_py : " i_py ", top-offset " (screen :top-offset)))		
-			(Log/info (str "Params " mx "," my "," m_sx "," m_sy "," m_w "," m_h))
-			(Log/info (str "Expected -16, -16, 2, 6, 28, 21"))
+					m_sx (int (- i_px (screen :left-offset) 1.0))
+					m_sy (int (- i_py (screen :top-offset) 1.0))
+					m_w (int (+ (screen :w) 3))
+					m_h (int (+ (screen :h) 3))]
 			(.render (screen :map) mx my m_sx m_sy m_w m_h)))
 			nil)
 	
@@ -239,74 +223,43 @@ SpriteSheet
 			(.draw (player :animation) (- cx 16) (- cy 16))
 			(.rotate graphics cx cy rot))
 			nil)
-			
+
+;; Mutable state
+(defn reset-game [player screen container]
+	(dosync 
+		(ref-set player (update-player-movement-vector (make-player)))
+		(ref-set screen (make-screen container)))
+	nil)
+
+;; Mutation function			
 (defn update-game-model
-	[player container delta]
+  "Function used by alter to move the player around"
+	[player screen container delta]
 	(update-player-position 
 			(update-player-angle player container delta) 
- 			player container delta))
-									
+ 			screen container delta))
+
+;; Proxy for the basic game class									
 (def scroller
 	(let [player (ref nil)
 				screen (ref nil)]
 		(proxy [BasicGame] ["Scroller"]
 			(init [container]
 				(reset-game player screen container)
-				
-				(Log/info (str "Blocked stuff" (screen :blocked)))
 				)
 			
 			(update [container delta]
 				(dosync
 					(alter player 
 						update-game-model 
-						container delta)))
+						@screen container delta)))
 							
 			(render [container graphics]
 				(render-draw-map @player @screen)
 				(render-translate-graphics graphics @player)
 				(render-draw-tank graphics @player @screen)
 				(.resetTransform graphics)))))
-		
-;; -----------------------------------------------------
-
-;; Automated Tests
-(use 'clojure.contrib.test-is)
-(deftest test-blocked?-checks-in-array
-	(let [screen {:blocked [[false false] 
-												  [true false] 
-												  [false true]]}]
-		(is (false? (blocked? screen 0 0)))
-		(is (false? (blocked? screen 1 0)))
-		(is (true? (blocked? screen 0 1)))
-		(is (false? (blocked? screen 1 1)))
-		(is (false? (blocked? screen 0 2)))
-		(is (true? (blocked? screen 1 2)))))
-				
-(deftest test-player-is-moved-if-possible
-	(let [screen {:blocked [[false false] 
-												  [true false] 
-												  [false true]]}
-			  player {:x 0 :y 0}]
-		(let [[moved, success] (try-move player screen 1 0)]
-			(and 
-				(is (true? success))
-				(is (= 1 (moved :x)))
-				(is (= 0 (moved :y)))))
-		(let [[moved, success] (try-move player screen 0 1)]
-			(and 
-				(is (true? success))
-				(is (= 0 (moved :x)))
-				(is (= 0 (moved :y)))))))
-					
-	
-(run-tests)
-
-;; Test data, just in case
-;;(def screen {:blocked [ [false false] [true false] [false true] ]})
-;;(def p {:x 0 :y 0})
 
 ;; Let the fun beggin !!
 (.start (new AppGameContainer scroller 800 600 false))
 
-;;(def M (make-matrix 2 3 (fn [i j] [i,j]))) 

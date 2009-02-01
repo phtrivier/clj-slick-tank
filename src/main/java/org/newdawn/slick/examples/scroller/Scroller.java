@@ -76,11 +76,13 @@ public class Scroller extends BasicGame {
 		map = new TiledMap("resources/map.tmx");
 		
 		// build a collision map based on tile properties in the TileD map
+		Log.info("Blocked dimensions : " + map.getWidth() + ", " + map.getHeight());
 		blocked = new boolean[map.getWidth()][map.getHeight()];
 		for (int x=0;x<map.getWidth();x++) {
 			for (int y=0;y<map.getHeight();y++) {
 				int tileID = map.getTileId(x, y, 0);
 				String value = map.getTileProperty(tileID, "blocked", "false");
+				Log.info("Blocked [" + x + "][" + y + "] : " + Boolean.parseBoolean(value));
 				if ("true".equals(value)) {
 					blocked[x][y] = true;
 				}
@@ -94,11 +96,11 @@ public class Scroller extends BasicGame {
 		heightInTiles = container.getHeight() / TILE_SIZE;
 		topOffsetInTiles = heightInTiles / 2;
 		leftOffsetInTiles = widthInTiles / 2;
-		
+		/*
 		Log.info("Container's with : " + container.getWidth());
 		Log.info("Tile size : " + TILE_SIZE);
 		Log.info("Left offset : " + leftOffsetInTiles);
-		
+		*/
 		
 		// create the player sprite based on a set of sprites from the sheet loaded
 		// above (tank tracks moving)
@@ -151,7 +153,6 @@ public class Scroller extends BasicGame {
 	 * @return True if the location is blocked
 	 */
 	private boolean blocked(float x, float y) {
-		Log.info("Blocked stuff : " + blocked);
 		/*
 		for (int i = 0 ; i < 10 ; i++) {
 			for (int j = 0 ; j < 10 ; j++) {
@@ -161,7 +162,6 @@ public class Scroller extends BasicGame {
 		*/
 		
 		boolean res = blocked[(int) x][(int) y]; 
-		Log.info("Checking whether position is blocked : " + (int) x + ", " + (int) y + " -- result is : " + res);
 		return res;
 	}
 	
@@ -180,24 +180,35 @@ public class Scroller extends BasicGame {
 		// first we try the real move, if that doesn't work
 		// we try moving on just one of the axis (X and then Y) 
 		// this allows us to slide against edges
+		/*
+		Log.info("tryMove with x,y : " + x + "," + y);
+		Log.info("new_x, new_y : " + newx + ", " + newy);
+		Log.info("bxy : " + blocked(newx, newy));
+		Log.info("bx : " + blocked(newx, playerY));
+		Log.info("by : " + blocked(playerX, newy));
+		*/
+		boolean res = false;
+		
 		if (blocked(newx,newy)) {
 			if (blocked(newx, playerY)) {
 				if (blocked(playerX, newy)) {
 					// can't move at all!
-					return false;
+					res = false;
 				} else {
 					playerY = newy;
-					return true;
+					res = true;
 				}
 			} else {
 				playerX = newx;
-				return true;
+				res = true;
 			}
 		} else {
 			playerX = newx;
 			playerY = newy;
-			return true;
+			res = true;
 		}
+		// Log.info("Result (blocked?) : " + res);
+		return res;
 	}
 	
 	/**
@@ -217,36 +228,36 @@ public class Scroller extends BasicGame {
 		// the player
 		int playerTileX = (int) playerX;
 		int playerTileY = (int) playerY;
-		
+		/*
 		Log.info("PlayerTileX : " + playerTileX);
 		Log.info("PlayerTileY : " + playerTileY);
-		
+		*/
 		// caculate the offset of the player from the edge of the tile. As the player moves around this
 		// varies and this tells us how far to offset the tile based rendering to give the smooth
 		// motion of scrolling
 		int playerTileOffsetX = (int) ((playerTileX - playerX) * TILE_SIZE);
 		int playerTileOffsetY = (int) ((playerTileY - playerY) * TILE_SIZE);
-
+/*
 		Log.info("PlayerTileOffsetX : " + playerTileOffsetX);
 		Log.info("PlayerTileOffsetY : " + playerTileOffsetY);
-		
+	*/	
 			
 		// render the section of the map that should be visible. Notice the -1 and +3 which renders
 		// a little extra map around the edge of the screen to cope with tiles scrolling on and off
 		// the screen
 		int x = playerTileOffsetX - (TANK_SIZE / 2);
 		int y = playerTileOffsetY - (TANK_SIZE / 2);
-		
+		/*
 		Log.info("PLayerTileX : " + playerTileX + ", LeftOffset in tiles : " + leftOffsetInTiles);
 		Log.info("PLayerTileY : " + playerTileY + ", TopOffset in tiles : " + topOffsetInTiles);
-		
+		*/
 		int sx = playerTileX - leftOffsetInTiles - 1;
 		int sy = playerTileY - topOffsetInTiles - 1;
 		int width = widthInTiles + 3;
 		int height = heightInTiles + 3;
-		
+		/*
 		Log.info("Params to map.render : " + x + ", " + y + ", " + sx + ", " + sy + ", " + width + ", " + height);
-		
+		*/
 		map.render(x, y, 
 				   sx, 
 				   sy,
