@@ -127,18 +127,11 @@
   [player screen dx dy]
   (let [new_x (+ (player :x) dx)
         new_y (+ (player :y) dy)]
-
-    (let [bxy (blocked? screen new_x new_y)
-          bx (blocked? screen new_x (player :y))
-          by (blocked? screen   (player :x) new_y)]
-      (if bxy
-        (if bx
-          (if by
-            [player, false]
-            [(assoc player :y new_y), true])
-          [(assoc player :x new_x), true])
-        [(assoc player :x new_x :y new_y), true]))))
-
+		(cond
+		  (not (blocked? screen new_x new_y)) [(assoc player :y new_y :x new_x) true]
+		  (not (blocked? screen new_x (player :y))) [(assoc player :x new_x) true]
+		  (not (blocked? screen (player :x) new_y)) [(assoc player :y new_y) true]
+		  :else [player false]))) 
 
 (defn key-down?
   "Is a key down on a container ?"
