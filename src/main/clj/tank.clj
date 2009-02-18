@@ -39,10 +39,14 @@
   (map (fn [idx] (.getSprite sheet idx 1))
        (range 0 7)))
 
+(defn resrc
+  [name]
+  (str "./src/main/resources/" name))
+
 (defn load-player-animation
   "Load the animation of a player"
   []
-  (let [sheet (new SpriteSheet "resources/sprites.png" 32 32)]
+  (let [sheet (new SpriteSheet (resrc "sprites.png") 32 32)]
     (make-animation (make-images sheet))))
 
 (defn make-player
@@ -77,32 +81,33 @@
   [screen x y]
   (let [i (int x)
         j (int y)]
-    (true? (get (get (screen :blocked) i) j))))
+    (true? (get (screen :blocked) [i,j]))))
 
-(defn make-row-generator
-  [cell-generator w]
-  (fn [i]
-    (vec (map (fn [j] (cell-generator i j))
-              (range 0 w)))))
+;; All matrices positions
+(defn make-couples [i j]
+        (for [x (range 0 j)
+                    y (range 0 i)]
+                 [x,y]))
+(defn genmap
+  [keys f]
+  (zipmap keys (map f keys)))
 
-(defn make-matrix
-  [w h cell-generator]
-  (vec (map (make-row-generator cell-generator w)
-            (range 0 h))))
+(defn tile-blocked?
+        "Is a tile blocked in a tile map ?"
+        [tile-map i j]
+        (let [tileId (.getTileId tile-map i j 0)]
+     (Boolean/parseBoolean
+       (.getTileProperty tile-map tileId "blocked" "false"))))
 
 (defn make-collision-map
   "Builds a double dimensionned array telling
         whether a cell is blocked"
-  [m w h]
-  (make-matrix
-   w h
-   (fn [i j]
-     (let [tileId (.getTileId m i j 0)]
-       (let [res
-             (Boolean/parseBoolean
-              (.getTileProperty m tileId "blocked" "false"))]
-         res
-         )))))
+  [tile-map w h]
+  (genmap (make-couples w h)
+          (fn [couple]
+            (let [[i,j] couple]
+              (tile-blocked? tile-map i j)))))
+
 ;;;
 
 (defn make-screen
@@ -110,7 +115,7 @@
   [container]
   (let [w (float (/ (.getWidth container) tile-size))
         h (float (/ (.getHeight container) tile-size))
-        map (new TiledMap "resources/map.tmx")]
+        map (new TiledMap (resrc "map.tmx"))]
     { :w w
      :h h
      :top-offset (int (/ h 2))
@@ -127,11 +132,11 @@
   [player screen dx dy]
   (let [new_x (+ (player :x) dx)
         new_y (+ (player :y) dy)]
-		(cond
-		  (not (blocked? screen new_x new_y)) [(assoc player :y new_y :x new_x) true]
-		  (not (blocked? screen new_x (player :y))) [(assoc player :x new_x) true]
-		  (not (blocked? screen (player :x) new_y)) [(assoc player :y new_y) true]
-		  :else [player false]))) 
+                (cond
+                  (not (blocked? screen new_x new_y)) [(assoc player :y new_y :x new_x) true]
+                  (not (blocked? screen new_x (player :y))) [(assoc player :x new_x) true]
+                  (not (blocked? screen (player :x) new_y)) [(assoc player :y new_y) true]
+                  :else [player false])))
 
 (defn key-down?
   "Is a key down on a container ?"
